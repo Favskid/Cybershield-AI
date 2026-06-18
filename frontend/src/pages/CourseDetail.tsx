@@ -88,7 +88,7 @@ export default function CourseDetail() {
             <CardContent>
               <div className="aspect-video w-full rounded-md overflow-hidden bg-black">
                 <iframe
-                  src={course.videoUrl}
+                  src={course.videoUrl.replace("watch?v=", "embed/").replace("youtu.be/", "youtube.com/embed/")}
                   title={course.title}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

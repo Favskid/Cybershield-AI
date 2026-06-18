@@ -13,7 +13,7 @@ export function UserSidebar() {
   ];
 
   return (
-    <div className="w-64 border-r bg-card min-h-[calc(100vh-4rem)] flex-shrink-0 flex flex-col">
+    <div className="hidden md:flex w-64 border-r bg-card min-h-[calc(100vh-4rem)] flex-shrink-0 flex-col">
       <div className="p-4 border-b">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">User Portal</h2>
       </div>
