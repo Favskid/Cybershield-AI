@@ -1,0 +1,1014 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: CyberShield AI - Cybersecurity Awareness Platform API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: courses
+    description: Course management
+  - name: quizzes
+    description: Quiz management
+  - name: progress
+    description: User progress tracking
+  - name: threats
+    description: Threat report management
+  - name: announcements
+    description: Announcements management
+  - name: admin
+    description: Admin operations
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # AUTH
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Validation error or email already used
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with email and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Not authenticated
+
+  /auth/profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileUpdate"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /auth/change-password:
+    post:
+      operationId: changePassword
+      tags: [auth]
+      summary: Change current user password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordChange"
+      responses:
+        "200":
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # USERS (admin)
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /users/{userId}:
+    delete:
+      operationId: deleteUser
+      tags: [users]
+      summary: Delete a user (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /users/{userId}/progress:
+    get:
+      operationId: getUserProgress
+      tags: [users]
+      summary: Get a user's progress (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User progress list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Progress"
+
+  # COURSES
+  /courses:
+    get:
+      operationId: listCourses
+      tags: [courses]
+      summary: List all courses
+      responses:
+        "200":
+          description: All courses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Course"
+    post:
+      operationId: createCourse
+      tags: [courses]
+      summary: Create a course (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseInput"
+      responses:
+        "201":
+          description: Created course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+
+  /courses/{courseId}:
+    get:
+      operationId: getCourse
+      tags: [courses]
+      summary: Get a course by id
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Course detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CourseDetail"
+    put:
+      operationId: updateCourse
+      tags: [courses]
+      summary: Update a course (admin only)
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CourseUpdate"
+      responses:
+        "200":
+          description: Updated course
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Course"
+    delete:
+      operationId: deleteCourse
+      tags: [courses]
+      summary: Delete a course (admin only)
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # QUIZZES
+  /quizzes/course/{courseId}:
+    get:
+      operationId: listQuizzesByCourse
+      tags: [quizzes]
+      summary: Get all quiz questions for a course
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quiz questions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quiz"
+
+  /quizzes:
+    post:
+      operationId: createQuiz
+      tags: [quizzes]
+      summary: Create a quiz question (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizInput"
+      responses:
+        "201":
+          description: Created quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+
+  /quizzes/{quizId}:
+    put:
+      operationId: updateQuiz
+      tags: [quizzes]
+      summary: Update a quiz question (admin only)
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizUpdate"
+      responses:
+        "200":
+          description: Updated quiz
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quiz"
+    delete:
+      operationId: deleteQuiz
+      tags: [quizzes]
+      summary: Delete a quiz question (admin only)
+      parameters:
+        - name: quizId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /quizzes/submit/{courseId}:
+    post:
+      operationId: submitQuiz
+      tags: [quizzes]
+      summary: Submit quiz answers for a course
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizSubmission"
+      responses:
+        "200":
+          description: Quiz result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizResult"
+
+  # PROGRESS
+  /progress:
+    get:
+      operationId: getMyProgress
+      tags: [progress]
+      summary: Get current user's learning progress
+      responses:
+        "200":
+          description: User progress list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Progress"
+
+  # THREATS
+  /threats:
+    get:
+      operationId: listThreats
+      tags: [threats]
+      summary: List threats (own for user, all for admin)
+      responses:
+        "200":
+          description: Threat reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ThreatReport"
+    post:
+      operationId: createThreat
+      tags: [threats]
+      summary: Submit a new threat report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThreatInput"
+      responses:
+        "201":
+          description: Created threat with AI analysis
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreatReport"
+
+  /threats/{threatId}:
+    get:
+      operationId: getThreat
+      tags: [threats]
+      summary: Get a threat report by id
+      parameters:
+        - name: threatId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Threat report detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreatReport"
+
+  /threats/{threatId}/status:
+    patch:
+      operationId: updateThreatStatus
+      tags: [threats]
+      summary: Update threat report status (admin only)
+      parameters:
+        - name: threatId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ThreatStatusUpdate"
+      responses:
+        "200":
+          description: Updated threat
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ThreatReport"
+
+  # ANNOUNCEMENTS
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: List all announcements
+      responses:
+        "200":
+          description: Announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Create an announcement (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Created announcement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{announcementId}:
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Delete an announcement (admin only)
+      parameters:
+        - name: announcementId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  # ADMIN DASHBOARD
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get platform-wide statistics (admin only)
+      responses:
+        "200":
+          description: Platform statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/threats:
+    get:
+      operationId: listAdminThreats
+      tags: [admin]
+      summary: List all threat reports with user info (admin only)
+      responses:
+        "200":
+          description: All threat reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ThreatReportWithUser"
+
+  /admin/recent-activity:
+    get:
+      operationId: getRecentActivity
+      tags: [admin]
+      summary: Get recent platform activity (admin only)
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentActivity"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    # Auth schemas
+    RegisterInput:
+      type: object
+      required: [fullName, email, password]
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+
+    LoginInput:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    ProfileUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+          minLength: 2
+
+    PasswordChange:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+        newPassword:
+          type: string
+          minLength: 6
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    # User
+    User:
+      type: object
+      required: [id, fullName, email, role, createdAt]
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [USER, ADMIN]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    # Course
+    Course:
+      type: object
+      required: [id, title, description, content, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        videoUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+
+    CourseDetail:
+      type: object
+      required: [id, title, description, content, createdAt, quizCount]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        videoUrl:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        quizCount:
+          type: integer
+        userProgress:
+          type: ["object", "null"]
+          properties:
+            score:
+              type: ["integer", "null"]
+            completed:
+              type: boolean
+            completedAt:
+              type: ["string", "null"]
+              format: date-time
+
+    CourseInput:
+      type: object
+      required: [title, description, content]
+      properties:
+        title:
+          type: string
+          minLength: 3
+        description:
+          type: string
+        content:
+          type: string
+        videoUrl:
+          type: ["string", "null"]
+
+    CourseUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        content:
+          type: string
+        videoUrl:
+          type: ["string", "null"]
+
+    # Quiz
+    Quiz:
+      type: object
+      required: [id, courseId, question, optionA, optionB, optionC, optionD, correctAnswer, createdAt]
+      properties:
+        id:
+          type: integer
+        courseId:
+          type: integer
+        question:
+          type: string
+        optionA:
+          type: string
+        optionB:
+          type: string
+        optionC:
+          type: string
+        optionD:
+          type: string
+        correctAnswer:
+          type: string
+          enum: [A, B, C, D]
+        createdAt:
+          type: string
+          format: date-time
+
+    QuizInput:
+      type: object
+      required: [courseId, question, optionA, optionB, optionC, optionD, correctAnswer]
+      properties:
+        courseId:
+          type: integer
+        question:
+          type: string
+        optionA:
+          type: string
+        optionB:
+          type: string
+        optionC:
+          type: string
+        optionD:
+          type: string
+        correctAnswer:
+          type: string
+          enum: [A, B, C, D]
+
+    QuizUpdate:
+      type: object
+      properties:
+        question:
+          type: string
+        optionA:
+          type: string
+        optionB:
+          type: string
+        optionC:
+          type: string
+        optionD:
+          type: string
+        correctAnswer:
+          type: string
+          enum: [A, B, C, D]
+
+    QuizSubmission:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          items:
+            type: object
+            required: [quizId, answer]
+            properties:
+              quizId:
+                type: integer
+              answer:
+                type: string
+                enum: [A, B, C, D]
+
+    QuizResult:
+      type: object
+      required: [score, total, passed, progress]
+      properties:
+        score:
+          type: integer
+        total:
+          type: integer
+        passed:
+          type: boolean
+        progress:
+          $ref: "#/components/schemas/Progress"
+
+    # Progress
+    Progress:
+      type: object
+      required: [id, userId, courseId, score, completed, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        courseId:
+          type: integer
+        score:
+          type: ["integer", "null"]
+        completed:
+          type: boolean
+        completedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        course:
+          $ref: "#/components/schemas/Course"
+
+    # Threat
+    ThreatReport:
+      type: object
+      required: [id, userId, title, description, aiAnalysis, riskLevel, status, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        link:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        aiAnalysis:
+          type: string
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        status:
+          type: string
+          enum: [PENDING, REVIEWED, RESOLVED]
+        createdAt:
+          type: string
+          format: date-time
+
+    ThreatReportWithUser:
+      type: object
+      required: [id, userId, title, description, aiAnalysis, riskLevel, status, createdAt, user]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        link:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        aiAnalysis:
+          type: string
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH]
+        status:
+          type: string
+          enum: [PENDING, REVIEWED, RESOLVED]
+        createdAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          required: [id, fullName, email]
+          properties:
+            id:
+              type: integer
+            fullName:
+              type: string
+            email:
+              type: string
+
+    ThreatInput:
+      type: object
+      required: [title, description]
+      properties:
+        title:
+          type: string
+          minLength: 3
+        description:
+          type: string
+          minLength: 10
+        link:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+
+    ThreatStatusUpdate:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [PENDING, REVIEWED, RESOLVED]
+
+    # Announcement
+    Announcement:
+      type: object
+      required: [id, title, message, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AnnouncementInput:
+      type: object
+      required: [title, message]
+      properties:
+        title:
+          type: string
+          minLength: 3
+        message:
+          type: string
+          minLength: 5
+
+    # Admin
+    AdminStats:
+      type: object
+      required: [totalUsers, totalCourses, totalThreats, pendingThreats, resolvedThreats, avgQuizScore, completedCourses]
+      properties:
+        totalUsers:
+          type: integer
+        totalCourses:
+          type: integer
+        totalThreats:
+          type: integer
+        pendingThreats:
+          type: integer
+        resolvedThreats:
+          type: integer
+        avgQuizScore:
+          type: number
+        completedCourses:
+          type: integer
+
+    RecentActivity:
+      type: object
+      required: [recentThreats, recentUsers, recentProgress]
+      properties:
+        recentThreats:
+          type: array
+          items:
+            $ref: "#/components/schemas/ThreatReportWithUser"
+        recentUsers:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        recentProgress:
+          type: array
+          items:
+            $ref: "#/components/schemas/Progress"
