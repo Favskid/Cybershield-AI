@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Users, Trash2, ChevronRight, Search } from "lucide-react";
-import { useListUsers, useDeleteUser, useGetUserProgress, getListUsersQueryKey, getGetUserProgressQueryKey } from "@workspace/api-client-react";
+import { Users, Trash2, ChevronRight, Search, ShieldCheck, ShieldOff } from "lucide-react";
+import { useListUsers, useDeleteUser, useUpdateUserRole, useGetUserProgress, getListUsersQueryKey, getGetUserProgressQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/context/AuthContext";
 import { MainLayout } from "@/components/layout/MainLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -45,11 +46,14 @@ function UserProgressModal({ userId, onClose }: { userId: number; onClose: () =>
 export default function AdminUsers() {
   const { data: users, isLoading } = useListUsers({ query: { queryKey: getListUsersQueryKey() } });
   const deleteUser = useDeleteUser();
+  const updateUserRole = useUpdateUserRole();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [progressUserId, setProgressUserId] = useState<number | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<{ id: number; fullName: string; role: "USER" | "ADMIN" } | null>(null);
 
   const filtered = users?.filter(u =>
     u.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -65,6 +69,26 @@ export default function AdminUsers() {
         setDeleteUserId(null);
       },
       onError: () => toast({ title: "Error", description: "Failed to delete user", variant: "destructive" }),
+    });
+  };
+
+  const handleRoleChange = () => {
+    if (!roleChangeTarget) return;
+    const newRole = roleChangeTarget.role === "ADMIN" ? "USER" : "ADMIN";
+    updateUserRole.mutate({ userId: roleChangeTarget.id, data: { role: newRole } }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getListUsersQueryKey() });
+        toast({
+          title: newRole === "ADMIN" ? "Promoted to Admin" : "Demoted to User",
+          description: `${roleChangeTarget.fullName} is now ${newRole === "ADMIN" ? "an admin" : "a regular user"}.`,
+        });
+        setRoleChangeTarget(null);
+      },
+      onError: (err: unknown) => {
+        const message = (err as { data?: { error?: string } })?.data?.error || "Failed to update role";
+        toast({ title: "Error", description: message, variant: "destructive" });
+        setRoleChangeTarget(null);
+      },
     });
   };
 
@@ -107,6 +131,17 @@ export default function AdminUsers() {
                       {new Date(u.createdAt).toLocaleDateString()}
                     </span>
                     <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={u.role === "ADMIN" ? "text-yellow-500 hover:text-yellow-600" : "text-primary hover:text-primary/80"}
+                        onClick={() => setRoleChangeTarget({ id: u.id, fullName: u.fullName, role: u.role })}
+                        disabled={u.id === currentUser?.id}
+                        title={u.id === currentUser?.id ? "Cannot change your own role" : u.role === "ADMIN" ? "Demote to User" : "Promote to Admin"}
+                        data-testid={`button-role-${u.id}`}
+                      >
+                        {u.role === "ADMIN" ? <ShieldOff className="h-4 w-4" /> : <ShieldCheck className="h-4 w-4" />}
+                      </Button>
                       <Button size="sm" variant="ghost" onClick={() => setProgressUserId(u.id)} data-testid={`button-progress-${u.id}`}>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
@@ -137,6 +172,30 @@ export default function AdminUsers() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!roleChangeTarget} onOpenChange={() => setRoleChangeTarget(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {roleChangeTarget?.role === "ADMIN" ? "Demote to User" : "Promote to Admin"}
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {roleChangeTarget?.role === "ADMIN"
+                  ? `Remove admin privileges from ${roleChangeTarget?.fullName}? They will lose access to all admin areas.`
+                  : `Grant admin privileges to ${roleChangeTarget?.fullName}? They will have full access to all admin areas.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleRoleChange}
+                className={roleChangeTarget?.role === "ADMIN" ? "bg-destructive hover:bg-destructive/90" : ""}
+              >
+                {roleChangeTarget?.role === "ADMIN" ? "Demote" : "Promote"}
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

@@ -15,7 +15,6 @@ export interface RegisterInput {
   email: string;
   /** @minLength 6 */
   password: string;
-  role?: 'USER' | 'ADMIN';
 }
 
 export interface LoginInput {
@@ -321,6 +320,17 @@ export interface AnnouncementInput {
   title: string;
   /** @minLength 5 */
   message: string;
+}
+
+export type UserRoleUpdateRole = typeof UserRoleUpdateRole[keyof typeof UserRoleUpdateRole];
+
+export const UserRoleUpdateRole = {
+  USER: 'USER',
+  ADMIN: 'ADMIN',
+} as const;
+
+export interface UserRoleUpdate {
+  role: UserRoleUpdateRole;
 }
 
 export interface AdminStats {

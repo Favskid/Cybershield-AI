@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { coursesTable, quizzesTable, progressTable } from "@workspace/db";
-import { eq, count } from "drizzle-orm";
+import { eq, count, and } from "drizzle-orm";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
 import { logger } from "../lib/logger";
 
@@ -49,9 +49,9 @@ router.get("/:courseId", requireAuth, async (req: Request, res: Response) => {
     }
     const [quizCountResult] = await db.select({ count: count() }).from(quizzesTable).where(eq(quizzesTable.courseId, courseId));
     const [userProgress] = await db.select().from(progressTable)
-      .where(eq(progressTable.userId, req.user!.id))
+      .where(and(eq(progressTable.userId, req.user!.id), eq(progressTable.courseId, courseId)))
       .limit(1);
-    const progressForCourse = userProgress && userProgress.courseId === courseId ? userProgress : null;
+    const progressForCourse = userProgress ?? null;
     res.json({
       ...course,
       quizCount: Number(quizCountResult?.count || 0),

@@ -34,7 +34,8 @@ router.post("/submit/:courseId", requireAuth, async (req: Request, res: Response
     }
 
     const score = Math.round((correct / questions.length) * 100);
-    const passed = score >= 60;
+    const passThreshold = parseInt(process.env.QUIZ_PASS_THRESHOLD ?? "60", 10);
+    const passed = score >= passThreshold;
     const now = new Date();
 
     const existing = await db.select().from(progressTable)

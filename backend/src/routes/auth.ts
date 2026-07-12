@@ -11,7 +11,7 @@ const router = Router();
 // POST /auth/register
 router.post("/register", async (req: Request, res: Response) => {
   try {
-    const { fullName, email, password, role } = req.body;
+    const { fullName, email, password } = req.body;
     if (!fullName || !email || !password) {
       res.status(400).json({ error: "fullName, email, and password are required" });
       return;
@@ -26,8 +26,7 @@ router.post("/register", async (req: Request, res: Response) => {
       return;
     }
     const hashed = await bcrypt.hash(password, 10);
-    const insertRole = role === "ADMIN" ? "ADMIN" : "USER";
-    const [user] = await db.insert(usersTable).values({ fullName, email, password: hashed, role: insertRole }).returning();
+    const [user] = await db.insert(usersTable).values({ fullName, email, password: hashed, role: "USER" }).returning();
     const token = generateToken({ id: user.id, email: user.email, role: user.role });
     const { password: _pw, ...safeUser } = user;
     res.status(201).json({ token, user: safeUser });

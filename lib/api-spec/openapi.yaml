@@ -172,6 +172,35 @@ paths:
               schema:
                 $ref: "#/components/schemas/MessageResponse"
 
+  /users/{userId}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [users]
+      summary: Update a user's role (admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRoleUpdate"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid role or self-demotion attempt
+        "404":
+          description: User not found
+
   /users/{userId}/progress:
     get:
       operationId: getUserProgress
@@ -647,6 +676,14 @@ components:
       properties:
         message:
           type: string
+
+    UserRoleUpdate:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          enum: [USER, ADMIN]
 
     # User
     User:

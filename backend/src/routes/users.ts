@@ -25,6 +25,47 @@ router.get("/", requireAuth, requireAdmin, async (_req: Request, res: Response) 
   }
 });
 
+// PATCH /users/:userId/role — admin only
+router.patch("/:userId/role", requireAuth, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const userId = parseInt(req.params.userId);
+    if (isNaN(userId)) {
+      res.status(400).json({ error: "Invalid userId" });
+      return;
+    }
+    const { role } = req.body;
+    if (!["USER", "ADMIN"].includes(role)) {
+      res.status(400).json({ error: "role must be USER or ADMIN" });
+      return;
+    }
+    // Prevent admin from demoting themselves
+    if (userId === req.user!.id && role === "USER") {
+      res.status(400).json({ error: "You cannot remove your own admin role" });
+      return;
+    }
+    const [user] = await db
+      .update(usersTable)
+      .set({ role })
+      .where(eq(usersTable.id, userId))
+      .returning({
+        id: usersTable.id,
+        fullName: usersTable.fullName,
+        email: usersTable.email,
+        role: usersTable.role,
+        createdAt: usersTable.createdAt,
+        updatedAt: usersTable.updatedAt,
+      });
+    if (!user) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.json(user);
+  } catch (err) {
+    logger.error({ err }, "updateUserRole error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // DELETE /users/:userId — admin only
 router.delete("/:userId", requireAuth, requireAdmin, async (req: Request, res: Response) => {
   try {
