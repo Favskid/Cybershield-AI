@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm run build && pnpm run start",
+    "dev": "pnpm run build && pnpm run start:local",
     "build": "node ./build.mjs",
-    "start": "node --env-file=../.env --enable-source-maps ./dist/index.mjs",
+    "start": "node --import tsx/esm ./src/seed-admin.ts && node --enable-source-maps ./dist/index.mjs",
+    "start:local": "node --import tsx/esm ./src/seed-admin.ts && node --env-file=../.env --enable-source-maps ./dist/index.mjs",
     "seed:admin": "node --import tsx/esm ./src/seed-admin.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
